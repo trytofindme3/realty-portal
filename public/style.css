@@ -1,0 +1,22 @@
+/* Минимальный стиль — потом замени своим дизайном из Figma */
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, sans-serif; background: #f5f5f4; color: #1c1917; }
+a { color: inherit; }
+.top { display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; background: #fff; border-bottom: 1px solid #e7e5e4; }
+.top nav a { margin-left: 16px; text-decoration: none; }
+.logo { font-weight: 700; text-decoration: none; }
+main { max-width: 1000px; margin: 0 auto; padding: 24px 16px; }
+.filter { display: flex; flex-wrap: wrap; gap: 8px; }
+.filter > * , .form input, .form select, .form textarea { padding: 8px 10px; border: 1px solid #d6d3d1; border-radius: 6px; font: inherit; }
+button { padding: 8px 16px; border: 0; border-radius: 6px; background: #1c1917; color: #fff; cursor: pointer; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+.card { display: block; padding: 16px; background: #fff; border-radius: 10px; text-decoration: none; border: 1px solid #e7e5e4; }
+.card:hover { border-color: #1c1917; }
+.card h3 { margin: 8px 0 4px; font-size: 1.05rem; }
+.badge { font-size: .75rem; background: #e7e5e4; padding: 2px 8px; border-radius: 99px; }
+.muted { color: #78716c; }
+.form { display: grid; gap: 12px; max-width: 420px; }
+.form label { display: grid; gap: 4px; }
+.error { color: #b91c1c; margin: 0; }
+.detail img { max-width: 100%; border-radius: 10px; }
+.price { font-size: 1.4rem; font-weight: 700; }
