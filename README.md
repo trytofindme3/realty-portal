@@ -3,6 +3,7 @@
 Jednoduchý portál realitních inzerátů v čistém PHP 8 + PostgreSQL (bez frameworku, PDO).
 
 ## Funkce
+- vyhledávání a řazení, registrace, správa vlastních inzerátů (úprava, mazání), stránkování, podobné inzeráty.
 - výpis inzerátů s filtrem (město, prodej/pronájem, max. cena)
 - detail inzerátu
 - přihlášení / odhlášení (sessions, `password_hash`)
