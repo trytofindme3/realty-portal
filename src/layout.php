@@ -20,6 +20,7 @@ function layout_start(string $title): void
             <a href="logout.php">Odhlásit</a>
         <?php else: ?>
             <a href="login.php">Přihlásit</a>
+            <a href="register.php">Registrace</a>
         <?php endif; ?>
     </nav>
 </header>
