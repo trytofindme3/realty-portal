@@ -51,13 +51,32 @@ if ($minArea > 0) {
     $params['min_area'] = $minArea;
 }
 
-// 3) Запрос: WHERE из параметров, ORDER BY из белого списка
+// 3) Пагинация: сколько всего найдено и какую страницу показать
+$perPage = 6;                                          // объявлений на страницу
+$page    = max(1, (int)($_GET['page'] ?? 1));          // max(1, …) — страница не меньше 1
+
+$countStmt = $pdo->prepare('SELECT COUNT(*) FROM listings' . $where); // тот же WHERE, но считаем строки
+$countStmt->execute($params);
+$total = (int)$countStmt->fetchColumn();
+$pages = max(1, (int)ceil($total / $perPage));         // ceil округляет вверх: 7 объявлений → 2 страницы
+$page  = min($page, $pages);                           // ?page=999 → последняя страница
+$offset = ($page - 1) * $perPage;                      // сколько строк пропустить
+
+// 4) Запрос: WHERE из параметров, ORDER BY из белого списка, LIMIT/OFFSET для страницы
 $sql  = 'SELECT id, title, type, city, price, area_m2, rooms FROM listings'
       . $where
-      . ' ORDER BY ' . $sorts[$sort];
+      . ' ORDER BY ' . $sorts[$sort]
+      . ' LIMIT :limit OFFSET :offset';
 $stmt = $pdo->prepare($sql);
-$stmt->execute($params);
+$stmt->execute($params + ['limit' => $perPage, 'offset' => $offset]); // + склеивает два массива
 $listings = $stmt->fetchAll();
+
+// Ссылка на другую страницу с сохранением всех фильтров
+function page_url(int $n): string
+{
+    return '?' . http_build_query(array_merge($_GET, ['page' => $n])); // берём текущие ?параметры и меняем page
+}
+
 
 $cities = $pdo->query('SELECT DISTINCT city FROM listings ORDER BY city')->fetchAll(PDO::FETCH_COLUMN);
 
@@ -87,7 +106,7 @@ layout_start('Inzeráty');
     <button>Filtrovat</button>
 </form>
 
-<p class="muted">Nalezeno: <?= count($listings) ?></p>
+<p class="muted">Nalezeno: <?= $total ?>
 
 <div class="grid">
     <?php foreach ($listings as $l): ?>
@@ -99,4 +118,18 @@ layout_start('Inzeráty');
         </a>
     <?php endforeach; ?>
 </div>
+<?php if ($pages > 1): ?>
+    <nav class="pagination">
+        <?php if ($page > 1): ?><a href="<?= e(page_url($page - 1)) ?>">← Předchozí</a><?php endif; ?>
+        <?php for ($i = 1; $i <= $pages; $i++): ?>
+            <?php if ($i === $page): ?>
+                <span class="current"><?= $i ?></span>
+            <?php else: ?>
+                <a href="<?= e(page_url($i)) ?>"><?= $i ?></a>
+            <?php endif; ?>
+        <?php endfor; ?>
+        <?php if ($page < $pages): ?><a href="<?= e(page_url($page + 1)) ?>">Další →</a><?php endif; ?>
+    </nav>
+<?php endif; ?>
+
 <?php layout_end();
