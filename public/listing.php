@@ -25,6 +25,16 @@ if (!$l) {                                            // нет такого id 
     layout_end();
     exit;
 }
+// Похожие объявления: тот же город и тип, кроме текущего, максимум 3
+$stmt = $pdo->prepare(
+    'SELECT id, title, price, rooms, area_m2
+     FROM listings
+     WHERE city = ? AND type = ? AND id <> ?
+     ORDER BY created_at DESC
+     LIMIT 3'
+);
+$stmt->execute([$l['city'], $l['type'], $l['id']]);
+$similar = $stmt->fetchAll();
 
 layout_start($l['title']);
 ?>
@@ -43,4 +53,17 @@ layout_start($l['title']);
     <p><?= nl2br(e($l['description'])) ?></p>        <!-- nl2br: переносы строк → <br>, ПОСЛЕ экранирования -->
     <a href="index.php">← Zpět na výpis</a>
 </article>
+<?php if ($similar): ?>
+    <h2>Podobné inzeráty</h2>
+    <div class="grid">
+        <?php foreach ($similar as $s): ?>
+            <a class="card" href="listing.php?id=<?= $s['id'] ?>">
+                <h3><?= e($s['title']) ?></h3>
+                <p><?= e($s['rooms']) ?> · <?= (int)$s['area_m2'] ?> m²</p>
+                <strong><?= price((int)$s['price']) ?></strong>
+            </a>
+        <?php endforeach; ?>
+    </div>
+<?php endif; ?>
+
 <?php layout_end();
