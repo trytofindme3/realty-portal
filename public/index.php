@@ -1,49 +1,74 @@
 <?php
-// public/index.php — главная: список объявлений + фильтр по городу, типу и цене.
+// public/index.php — главная: список объявлений + поиск, фильтры и сортировка.
 
 declare(strict_types=1);
-require __DIR__ . '/../src/db.php';       // даёт переменную $pdo
-require __DIR__ . '/../src/helpers.php';  // e(), price(), сессия
-require __DIR__ . '/../src/layout.php';   // шапка/подвал
+require __DIR__ . '/../src/db.php';
+require __DIR__ . '/../src/helpers.php';
+require __DIR__ . '/../src/layout.php';
 
-// 1) Читаем фильтры из адресной строки: index.php?city=Praha&type=pronajem&max=20000
-$city = trim($_GET['city'] ?? '');                    // ?? '' — если параметра нет, пустая строка
-$type = $_GET['type'] ?? '';
-$max  = (int)($_GET['max'] ?? 0);                     // (int) превращает мусор в 0
+// 1) Читаем фильтры из адресной строки
+$q       = trim($_GET['q'] ?? '');                     // поиск по названию
+$city    = trim($_GET['city'] ?? '');
+$type    = $_GET['type'] ?? '';
+$max     = (int)($_GET['max'] ?? 0);
+$minArea = (int)($_GET['min_area'] ?? 0);              // НОВОЕ: минимальная площадь
+$sort    = $_GET['sort'] ?? 'new';                     // НОВОЕ: сортировка
 
-// 2) Собираем SQL по кусочкам. Значения НЕ вклеиваем в строку — только плейсхолдеры :name
-$sql    = 'SELECT id, title, type, city, price, area_m2, rooms FROM listings WHERE 1=1';
-$params = [];                                         // сюда кладём значения для плейсхолдеров
+// Белый список сортировок: ключ из URL → кусок SQL.
+// Колонку в ORDER BY нельзя передать плейсхолдером, поэтому пользователь выбирает только ключ.
+$sorts = [
+    'new'        => 'created_at DESC',
+    'price_asc'  => 'price ASC',
+    'price_desc' => 'price DESC',
+    'area_desc'  => 'area_m2 DESC',
+];
+if (!isset($sorts[$sort])) {                           // пришло что-то чужое → сортировка по умолчанию
+    $sort = 'new';
+}
 
+// 2) Собираем WHERE по кусочкам
+$where  = ' WHERE 1=1';
+$params = [];
+
+if ($q !== '') {
+    $where .= ' AND title ILIKE :q';                   // ILIKE — поиск без учёта регистра (фишка Postgres)
+    $params['q'] = '%' . $q . '%';                     // % — «любые символы до и после»
+}
 if ($city !== '') {
-    $sql .= ' AND city = :city';
+    $where .= ' AND city = :city';
     $params['city'] = $city;
 }
-if (in_array($type, ['prodej', 'pronajem'], true)) {  // принимаем только разрешённые значения
-    $sql .= ' AND type = :type';
+if (in_array($type, ['prodej', 'pronajem'], true)) {
+    $where .= ' AND type = :type';
     $params['type'] = $type;
 }
 if ($max > 0) {
-    $sql .= ' AND price <= :max';
+    $where .= ' AND price <= :max';
     $params['max'] = $max;
 }
-$sql .= ' ORDER BY created_at DESC';                  // новые сверху
+if ($minArea > 0) {
+    $where .= ' AND area_m2 >= :min_area';
+    $params['min_area'] = $minArea;
+}
 
-// 3) Prepared statement: база получает запрос и данные отдельно → SQL-инъекция невозможна
+// 3) Запрос: WHERE из параметров, ORDER BY из белого списка
+$sql  = 'SELECT id, title, type, city, price, area_m2, rooms FROM listings'
+      . $where
+      . ' ORDER BY ' . $sorts[$sort];
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
-$listings = $stmt->fetchAll();                        // массив строк
+$listings = $stmt->fetchAll();
 
-// Список городов для выпадающего меню (DISTINCT = без повторов)
 $cities = $pdo->query('SELECT DISTINCT city FROM listings ORDER BY city')->fetchAll(PDO::FETCH_COLUMN);
 
 layout_start('Inzeráty');
 ?>
-<form method="get" class="filter">                    <!-- GET: фильтр попадает в URL, ссылкой можно поделиться -->
+<form method="get" class="filter">
+    <input type="search" name="q" placeholder="Hledat v názvu…" value="<?= e($q) ?>">
     <select name="city">
         <option value="">Všechna města</option>
         <?php foreach ($cities as $c): ?>
-            <option <?= $c === $city ? 'selected' : '' ?>><?= e($c) ?></option> <!-- запоминаем выбор -->
+            <option <?= $c === $city ? 'selected' : '' ?>><?= e($c) ?></option>
         <?php endforeach; ?>
     </select>
     <select name="type">
@@ -52,6 +77,13 @@ layout_start('Inzeráty');
         <option value="pronajem" <?= $type === 'pronajem' ? 'selected' : '' ?>>Pronájem</option>
     </select>
     <input type="number" name="max" placeholder="Max. cena" value="<?= $max ?: '' ?>">
+    <input type="number" name="min_area" placeholder="Min. m²" value="<?= $minArea ?: '' ?>">
+    <select name="sort">
+        <option value="new"        <?= $sort === 'new' ? 'selected' : '' ?>>Nejnovější</option>
+        <option value="price_asc"  <?= $sort === 'price_asc' ? 'selected' : '' ?>>Nejlevnější</option>
+        <option value="price_desc" <?= $sort === 'price_desc' ? 'selected' : '' ?>>Nejdražší</option>
+        <option value="area_desc"  <?= $sort === 'area_desc' ? 'selected' : '' ?>>Největší</option>
+    </select>
     <button>Filtrovat</button>
 </form>
 
@@ -59,9 +91,9 @@ layout_start('Inzeráty');
 
 <div class="grid">
     <?php foreach ($listings as $l): ?>
-        <a class="card" href="listing.php?id=<?= $l['id'] ?>">  <!-- id — число из БД, экранировать не нужно -->
+        <a class="card" href="listing.php?id=<?= $l['id'] ?>">
             <span class="badge"><?= $l['type'] === 'prodej' ? 'Prodej' : 'Pronájem' ?></span>
-            <h3><?= e($l['title']) ?></h3>                    <!-- текст из БД → всегда через e() -->
+            <h3><?= e($l['title']) ?></h3>
             <p><?= e($l['city']) ?> · <?= e($l['rooms']) ?> · <?= (int)$l['area_m2'] ?> m²</p>
             <strong><?= price((int)$l['price']) ?></strong>
         </a>
