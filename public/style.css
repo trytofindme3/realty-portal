@@ -20,3 +20,9 @@ button { padding: 8px 16px; border: 0; border-radius: 6px; background: #1c1917; 
 .error { color: #b91c1c; margin: 0; }
 .detail img { max-width: 100%; border-radius: 10px; }
 .price { font-size: 1.4rem; font-weight: 700; }
+.table { width: 100%; border-collapse: collapse; background: #fff; }
+.table th, .table td { padding: 10px; border-bottom: 1px solid #e7e5e4; text-align: left; }
+.actions { display: flex; gap: 12px; align-items: center; }
+.actions form { margin: 0; }
+button.danger { background: #b91c1c; }
+
