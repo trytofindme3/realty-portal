@@ -17,6 +17,7 @@ function layout_start(string $title): void
     <nav>
         <?php if (current_user_id()): ?>                <!-- меню зависит от того, вошёл ли пользователь -->
             <a href="create.php">+ Přidat inzerát</a>
+            <a href="my.php">Moje inzeráty</a>
             <a href="logout.php">Odhlásit</a>
         <?php else: ?>
             <a href="login.php">Přihlásit</a>
