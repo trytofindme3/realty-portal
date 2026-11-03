@@ -10,6 +10,7 @@ function layout_start(string $title): void
     <meta name="viewport" content="width=device-width, initial-scale=1"> <!-- нормальный вид на телефоне -->
     <title><?= e($title) ?> · RealtyPortal</title>                       <?php /* <?= ... ?> — короткая запись echo */ ?>
     <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
 </head>
 <body>
 <header class="top">
