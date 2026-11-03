@@ -106,7 +106,7 @@ layout_start('Inzeráty');
     <button>Filtrovat</button>
 </form>
 
-<p class="muted">Nalezeno: <?= $total ?>
+<p class="muted">Nalezeno: <?= $total ?></p>
 
 <div class="grid">
     <?php foreach ($listings as $l): ?>

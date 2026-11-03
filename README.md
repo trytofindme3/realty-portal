@@ -1,12 +1,13 @@
 # RealtyPortal
+![main](docs/image.png)
+![Výpis inzerátů](docs/vypis.jpg)
 
 Jednoduchý portál realitních inzerátů v čistém PHP 8 + PostgreSQL (bez frameworku, PDO).
 
 ## Funkce
-- vyhledávání a řazení, registrace, správa vlastních inzerátů (úprava, mazání), stránkování, podobné inzeráty.
-- výpis inzerátů s filtrem (město, prodej/pronájem, max. cena)
-- detail inzerátu
-- přihlášení / odhlášení (sessions, `password_hash`)
+- vyhledávání a řazení, registrace přihlášení / odhlášení (sessions, `password_hash`)
+- výpis inzerátů s filtrem, stránkování, podobné inzeráty (město, prodej/pronájem, max. cena)
+- detail inzerátu, správa vlastních inzerátů (úprava, mazání)
 - přidání inzerátu s nahráním fotky (jen pro přihlášené)
 
 ## Bezpečnost
